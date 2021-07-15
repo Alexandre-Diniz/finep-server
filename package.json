@@ -9,7 +9,8 @@
     "client": "node client.js",
     "twitter": "node twitter.js",
     "process": "node process.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "service": "pm2 start index.js"
   },
   "author": "",
   "license": "ISC",
