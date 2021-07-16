@@ -1,3 +1,4 @@
-[{"id":1, "token":"alexandre.diniz.dias@gmail.com", "email":"123456"},
- {"id":3, "token":"123456", "email":"alexandre.diniz.dias@gmail.com"},
- {"id":6, "token":"0b1c1858-e0b3-11eb-ba80-0242ac130004", "email":"contato.mendeslucas@gmail.com"}]
+"id";"token";"email"
+1;"alexandre.diniz.dias@gmail.com";"123456"
+3;"123456";"alexandre.diniz.dias@gmail.com"
+6;"0b1c1858-e0b3-11eb-ba80-0242ac130004";"contato.mendeslucas@gmail.com"
