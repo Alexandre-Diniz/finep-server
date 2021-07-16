@@ -17,7 +17,7 @@ async function getFollowerCountList(profileID) {
                   Follower.id_str = ${profileID}
                   and created_at in (
                     select max(created_at)
-                    from followers
+                    from Followers
                       where id_str=${profileID}
                       and created_at>=${daysBefore}
                     group by day(created_at)
