@@ -12,7 +12,7 @@ ProfileUser.init({
   }
 },{
   sequelize,
-  modelName:'ProfileUSer',
+  modelName:'ProfileUser',
   timestamps: false
 })
 
