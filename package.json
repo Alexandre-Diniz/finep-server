@@ -7,9 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
     "client": "node client.js",
-    "twitter": "node twitter.js",
+    "followers": "pm2 start ./src/processes/Followers.js",
     "process": "node process.js",
-    "start": "node index.js",
+    "start": "pm2 start index.js",
     "service": "pm2 start index.js"
   },
   "author": "",

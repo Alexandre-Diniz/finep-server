@@ -2,8 +2,11 @@ const Profile = require('../Models/Profile')
 const Follower = require('../Models/Follower')
 const twitter = require('../services/twitter')
 const delay = require('../utils/delay')
+const { Op } = require('sequelize')
 
 const DELAY_TIME = 1000 // 1s
+const ONE_HOUR = 1000*60*60
+const WAITING_TIME = ONE_HOUR*1
 
 // consulta quem sao os usuários e retorna os IDs
 async function getAllProfiles() {
@@ -54,52 +57,67 @@ async function retriveNewProfileInfo(profile) {
 
 async function retriveFollowerCounter(profileID, followers_count) {
   try {
-    const response = await Follower.create({
-      id_str: profileID,
-      followers_count: followers_count,
+    const today = new Date().setHours(0)
+    const follower = await Follower.findOne({
+      where:{
+        created_at:{
+          [Op.gte]: new Date(today).toJSON()
+        },
+        id_str:profileID
+      }
     })
-    return response
+    if(follower){
+      console.log(follower.toJSON())
+      await Follower.update({
+        followers_count
+      }, {
+        where:{
+          id: follower.toJSON().id
+        }
+      })
+    } else {
+      console.log('not found')
+      await Follower.create({
+        id_str:profileID,
+        followers_count
+      })
+    }
   } catch (error) {
-    return null
+    console.error(error)
   }
 }
+
 
 async function run() {
   try {
     const IDList = await getAllProfiles()
     IDList.map((id, index) => {
       setTimeout(async()=>{
+        console.log(`${index+1}/${IDList.length}-->${id}`)
+
         const profile = await getProfileInfo(id)
-        // const { name, screen_name, description, followers_count, profile_image_url_https, verified } = profile
-        // console.log({ name, screen_name, description, followers_count, profile_image_url_https, verified })
-        const response = await retriveNewProfileInfo(profile)
-        const followerCount = await retriveFollowerCounter(
+  
+        await retriveNewProfileInfo(profile)
+        await retriveFollowerCounter(
           profile.id_str,
           profile.followers_count,
         )
+
+        if(index===IDList.length-1){
+          setTimeout(()=>{
+            run()
+          },WAITING_TIME)
+        }
+
       },DELAY_TIME*index)
     })
   } catch (error) {}
 }
 
-run()
-
-// run().then(async () => {
-//   while (true) {
-//     await run()
-//     await delay(1 * 60 * 1000)
-//   }
-// })
-
-// const deltaInterval = 1 * 60 * 1000
-// setInterval(() => {
-//   run()
-// }, deltaInterval)
-
-// pegar todos os perfis do banco getAllProfiles() retorna uma lista de IDs
-// chamar a api para cada um dos perfis getProfileInfo(id) retorna os dados do usuario
-// armazenar os valores independente da verificacao retriveNewProfileInfo(profile)
-
-// retrieveProfiles()
-// getProfileInfo('25577585').then(response=>console.log(response.followers_count))
-// retrieveProfileById('25577585').then(response=>console.log(response.followers_count))
+(async()=>{
+  try {
+    await run()
+  } catch (error) {
+    console.error(error)
+  }
+})()
