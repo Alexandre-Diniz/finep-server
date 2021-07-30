@@ -11,7 +11,7 @@ profiles.map((profile, index) => {
       const screen_name = profile.Twitter
       const response = await twitter.get('https://api.twitter.com/1.1/users/show.json',
       {
-        screen_name
+        screen_name: screen_name
       })
       // await Profile.create({
       //   id_str: response.id_str,
