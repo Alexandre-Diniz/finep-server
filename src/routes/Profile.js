@@ -119,8 +119,10 @@ Router.route('/update').post(async (req, res, next) => {
                 await UpdateProfile.destroy({ where: {}, force: true })
                 await MetaUpdateProfile.destroy({ where: {}, force: true })
                 res.send('ok')
-              } catch (error) {}
-            }, 20000)
+              } catch (error) {
+                console.log(error)
+              }
+            }, 5000)
           }
         } catch (error) {
           console.error(error)
