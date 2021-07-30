@@ -51,6 +51,23 @@ Router.route('/')
     }
   })
 
+Router.route('/all')
+  .get(async(req,res,next)=>{
+    try {
+      console.log(req.query.userID)
+      if(!req.query.userID) res.status(401).json({ message: 'User not found' })
+      const profiles = await Profile.findAll({
+        attributes:['screen_name','name','followers_count','profile_image_url_https','verified'],
+        order: [['name','ASC']]
+      })
+      const profileList = profiles.map(profile=>profile.toJSON())
+      res.status(200).json(profileList)
+    } catch (error) {
+      console.error(error)
+      res.status(404).json({ message: 'User not found' })
+    }
+  })
+
 Router.route('/update').post(async (req, res, next) => {
   try {
     const profileList = req.body.profileList.trim().split(',')
