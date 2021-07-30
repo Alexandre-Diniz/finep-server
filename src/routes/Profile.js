@@ -56,7 +56,7 @@ Router.route('/update').post(async (req, res, next) => {
     const profileList = req.body.profileList.trim().split(',')
     const profileListFiltered = profileList.map((profile) => {
       if (profile.split('@').length === 1) {
-        return profile[0]
+        return profile
       } else {
         return profile.split('@')[1]
       }
