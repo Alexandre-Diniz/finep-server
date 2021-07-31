@@ -57,7 +57,7 @@ Router.route('/all')
       console.log(req.query.userID)
       if(!req.query.userID) res.status(401).json({ message: 'User not found' })
       const profiles = await Profile.findAll({
-        attributes:['screen_name','name','followers_count','profile_image_url_https','verified'],
+        attributes:['screen_name','name','followers_count','id_str','profile_image_url_https','verified'],
         order: [['name','ASC']]
       })
       const profileList = profiles.map(profile=>profile.toJSON())
