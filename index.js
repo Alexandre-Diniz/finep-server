@@ -21,6 +21,10 @@ io.on('connection', socket=>{
       console.error(error)
     }
   })
+
+  socket.on('remove_profiles_update',()=>{
+    socket.removeAllListeners('profiles_update')
+  })
 })
 
 const PORT = process.env.PORT || 3001
