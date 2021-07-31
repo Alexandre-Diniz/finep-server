@@ -6,6 +6,7 @@ const { Server } = require('socket.io')
 const SearchRoutes = require('../routes/Search')
 const ProfileRoutes = require('../routes/Profile')
 const TokenRoutes = require('../routes/Token')
+const AdministratorRoutes = require('../routes/Administrator')
 
 const app = express()
 
@@ -15,6 +16,7 @@ app.use(cors())
 app.use('/search/', SearchRoutes)
 app.use('/profiles/', ProfileRoutes)
 app.use('/token/', TokenRoutes)
+app.use('/login/', AdministratorRoutes)
 
 const server = http.createServer(app)
 
