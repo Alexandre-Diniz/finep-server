@@ -105,8 +105,8 @@ async function run() {
                   count: 1,
                 })
               }
-              const totalLikes = response.reduce((acm, curr) => acm.favorite_count + curr.favorite_count,0)
-              const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count,0)
+              const totalLikes = response.reduce((acm, curr) => acm + curr.favorite_count,0)
+              const totalRetweets = response.reduce((acm, curr) => acm + curr.retweet_count,0)
               if(response.length){
                 await Engagement.update(
                   {
@@ -141,8 +141,8 @@ async function run() {
                 screen_name,
                 count: 1,
               })
-              const totalLikes = response.reduce((acm, curr) => acm.favorite_count + curr.favorite_count,0)
-              const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count,0)
+              const totalLikes = response.reduce((acm, curr) => acm + curr.favorite_count,0)
+              const totalRetweets = response.reduce((acm, curr) => acm + curr.retweet_count,0)
               
               if (response.length) {
                 console.log('1')
