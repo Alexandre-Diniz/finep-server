@@ -145,13 +145,14 @@ async function run() {
               const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count,0)
               
               if (response.length) {
+                console.log('1')
                 await saveEngagement([{
-                  createdAt:response.createdAt,
+                  createdAt:response[0].createdAt,
                   id_str,
                   last_id_str: response[0].id_str,
                   retweet_count: totalRetweets.retweet_count,
                   favorite_count: totalLikes.favorite_count,
-                  consulted_in: response.consulted_in,
+                  consulted_in: response[0].consulted_in,
                 }])
               }
             }
@@ -161,16 +162,24 @@ async function run() {
               screen_name,
               count: 1,
             })
-            const totalLikes = response.reduce((acm, curr) => acm.favorite_count + curr.favorite_count,0)
-            const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count,0)
+            const totalLikes = response.reduce((acm, curr) => acm + curr.favorite_count,0)
+            const totalRetweets = response.reduce((acm, curr) => acm + curr.retweet_count,0)
             if (response.length) {
-              await saveEngagement([{
-                createdAt:response.createdAt,
+              console.log({
+                createdAt:response[0].createdAt,
                 id_str,
-                last_id_str: response.id_str,
+                last_id_str: response[0].id_str,
                 retweet_count: totalRetweets,
                 favorite_count: totalLikes,
-                consulted_in: response.consulted_in,
+                consulted_in: response[0].consulted_in,
+              })
+              await saveEngagement([{
+                createdAt:response[0].createdAt,
+                id_str,
+                last_id_str: response[0].id_str,
+                retweet_count: totalRetweets,
+                favorite_count: totalLikes,
+                consulted_in: response[0].consulted_in,
               }])
             }
           }
