@@ -141,8 +141,8 @@ async function run() {
                 screen_name,
                 count: 1,
               })
-              const totalLikes = response.reduce((acm, curr) => acm.favorite_count + curr.favorite_count)
-              const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count)
+              const totalLikes = response.reduce((acm, curr) => acm.favorite_count + curr.favorite_count,0)
+              const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count,0)
               
               if (response.length) {
                 await saveEngagement([{
@@ -161,11 +161,11 @@ async function run() {
               screen_name,
               count: 1,
             })
-            const totalLikes = response.reduce((acm, curr) => acm.favorite_count + curr.favorite_count)
-            const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count)
+            const totalLikes = response.reduce((acm, curr) => acm.favorite_count + curr.favorite_count,0)
+            const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count,0)
             if (response.length) {
               await saveEngagement([{
-                createdAt,
+                createdAt:response.createdAt,
                 id_str,
                 last_id_str: response.id_str,
                 retweet_count: totalRetweets,
@@ -183,3 +183,5 @@ async function run() {
     console.error(error)
   }
 }
+
+run()
