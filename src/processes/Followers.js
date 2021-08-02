@@ -92,6 +92,11 @@ async function run() {
   try {
     const IDList = await getAllProfiles()
     IDList.map((id, index) => {
+      if(index===IDList.length-1){
+        setTimeout(()=>{
+          run()
+        },WAITING_TIME)
+      }
       setTimeout(async()=>{
         console.log(`${index+1}/${IDList.length}-->${id}`)
 
@@ -102,16 +107,11 @@ async function run() {
           profile.id_str,
           profile.followers_count,
         )
-
-        if(index===IDList.length-1){
-          setTimeout(()=>{
-            run()
-          },WAITING_TIME)
-        }
-
       },DELAY_TIME*index)
     })
-  } catch (error) {}
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 (async()=>{
