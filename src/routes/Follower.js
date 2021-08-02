@@ -18,7 +18,7 @@ Router.route('/:id_str')
         where:{
           id_str
         },
-        order: [['updated_at','DESC']],
+        order: [['updated_at','ASC']],
         limit: 30
       })
 
