@@ -6,6 +6,7 @@ const Follower = require('../Models/Follower')
 const twitter = require('../services/twitter')
 const { UpdateProfile } = require('../Models/UpdateProfile')
 const { MetaUpdateProfile } = require('../Models/MetaUpdateProfile')
+const { trackingError } = require('../utils/trackingError')
 
 const Router = express.Router()
 
@@ -157,60 +158,79 @@ Router.route('/update').post(async (req, res, next) => {
   }
 })
 
-Router.route('/:userID').post(async (req, res, next) => {
-  const { userID } = req.params
-  console.log(userID)
-  const {
-    id_str,
-    name,
-    screen_name,
-    description,
-    followers_count,
-    profile_image_url_https,
-    verified,
-  } = req.body
-  console.log(req.body)
+Router.route('/:userID')
+  .post(async (req, res, next) => {
+    const { userID } = req.params
+    console.log(userID)
+    const {
+      id_str,
+      name,
+      screen_name,
+      description,
+      followers_count,
+      profile_image_url_https,
+      verified,
+    } = req.body
+    console.log(req.body)
 
-  try {
-    const profileExists = await Profile.findOne({
-      where: { id_str: id_str },
-    })
-    console.log('profileExists: ', profileExists, !profileExists)
-    if (!profileExists) {
-      const profileCreated = await Profile.create({
-        id_str,
-        name,
-        screen_name,
-        description,
-        followers_count,
-        profile_image_url_https,
-        verified,
+    try {
+      const profileExists = await Profile.findOne({
+        where: { id_str: id_str },
       })
-      console.log('profileCreated', profileCreated)
-      const profileUserCreated = await ProfileUser.create({
-        userID: userID,
-        profileID: profileCreated.id,
-      })
-      const addedToFoller = await Follower.create({
-        id_str: profileCreated.id_str,
-        followers_count: followers_count,
-      })
-      res.status(200).json(addedToFoller)
-    } else {
-      const profileUserCreated = await ProfileUser.create({
-        userID: userID,
-        profileID: profileExists.id,
-      })
-      const addedToFoller = await Follower.create({
-        id_str: profileExists.id_str,
-        followers_count: followers_count,
-      })
-      res.status(200).json(addedToFoller)
+      console.log('profileExists: ', profileExists, !profileExists)
+      if (!profileExists) {
+        const profileCreated = await Profile.create({
+          id_str,
+          name,
+          screen_name,
+          description,
+          followers_count,
+          profile_image_url_https,
+          verified,
+        })
+        console.log('profileCreated', profileCreated)
+        const profileUserCreated = await ProfileUser.create({
+          userID: userID,
+          profileID: profileCreated.id,
+        })
+        const addedToFoller = await Follower.create({
+          id_str: profileCreated.id_str,
+          followers_count: followers_count,
+        })
+        res.status(200).json(addedToFoller)
+      } else {
+        const profileUserCreated = await ProfileUser.create({
+          userID: userID,
+          profileID: profileExists.id,
+        })
+        const addedToFoller = await Follower.create({
+          id_str: profileExists.id_str,
+          followers_count: followers_count,
+        })
+        res.status(200).json(addedToFoller)
+      }
+    } catch (error) {
+      console.log(error.message)
+      res.status(404).json(error)
     }
-  } catch (error) {
-    console.log(error.message)
-    res.status(404).json(error)
-  }
-})
+  })
+  .get(async(req,res,next)=>{
+    try {
+      const data = req.params
+      trackingError(!data?.userID,'Nenhum id enviado')
+      const id_str = data.userID
+      console.log('id_str:',req.params)
+      const querying = await Profile.findOne({
+        where: {
+          id_str
+        }
+      })
+      trackingError(!querying?.toJSON(), `Nenhum usuário encontrado com o id_str ${id_str}`)
+      const profile = querying.toJSON()
+      res.status(200).json({...profile})
+    } catch (error) {
+      res.status(401).json({ message: error.message })
+    }
+  })
 
 module.exports = Router

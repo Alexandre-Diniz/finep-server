@@ -8,6 +8,7 @@
     "dev": "nodemon index.js",
     "client": "node client.js",
     "followers": "pm2 start ./src/processes/Followers.js",
+    "engagement": "pm2 start ./src/processes/Engagements.js",
     "process": "node process.js",
     "start": "pm2 start index.js",
     "service": "pm2 start index.js"

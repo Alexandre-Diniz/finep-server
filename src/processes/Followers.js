@@ -6,7 +6,7 @@ const { Op } = require('sequelize')
 
 const DELAY_TIME = 1000 // 1s
 const ONE_HOUR = 1000*60*60
-const WAITING_TIME = ONE_HOUR*1
+const WAITING_TIME = ONE_HOUR*13
 
 // consulta quem sao os usuários e retorna os IDs
 async function getAllProfiles() {

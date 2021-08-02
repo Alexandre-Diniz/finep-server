@@ -2,134 +2,184 @@ const { response } = require('express')
 const Profile = require('../Models/Profile')
 const twitter = require('../services/twitter')
 const Engagement = require('../Models/Engagement')
+const { Op } = require('sequelize')
 
 const SEARCH_TIME = 1500
+const ONE_HOUR = 1000 * 60 * 60
+const WAITING_TIME = ONE_HOUR * 5
 
-class Engagements {
-  constructor(user_id, count = 1, since_id) {
-    this.engagement = []
-    this.user_id = user_id
-    this.since_id = since_id
-    this.count = count
-  }
-
-  getEngagement() {
-    return this.engagement
-  }
-
-  setEngagement(engagement) {
-    this.engagement = engagement
-  }
-
-  async searchTweetsTimeline() {
-    try {
-      const params = {
-        screen_name: this.user_id,
-        since_id: this.since_id,
-        count: this.count,
-      }
-      const response = await twitter.get(
-        'https://api.twitter.com/1.1/statuses/user_timeline.json',
-        params,
-      )
-      const engagement = response.map((engagement) => {
-        return {
-          createdAt: engagement.created_at,
-          id_str: engagement.id_str,
-          retweet_count: engagement.retweet_count,
-          favorite_count: engagement.favorite_count,
-          consulted_in: new Date(),
-        }
-      })
-      this.setEngagement(engagement)
-    } catch (error) {
-      console.error(error.message)
-    }
+async function getAllProfiles() {
+  try {
+    const response = await Profile.findAll({
+      attributes: ['screen_name', 'id_str'],
+    })
+    const profileList = response.map((profile) => profile.toJSON())
+    return profileList
+  } catch (error) {
+    return []
   }
 }
 
-class DataBase {
-  constructor(model) {
-    this.profileList = []
-    this.model = model
-    this.modelList = { Engagement: Engagement }
+async function searchTweetsTimeline(params) {
+  try {
+    const response = await twitter.get(
+      'https://api.twitter.com/1.1/statuses/user_timeline.json',
+      params,
+    )
+    const engagement = response.map((engagement) => {
+      return {
+        createdAt: engagement.created_at,
+        id_str: engagement.id_str,
+        retweet_count: engagement.retweet_count,
+        favorite_count: engagement.favorite_count,
+        consulted_in: new Date(),
+      }
+    })
+    return engagement
+  } catch (error) {
+    console.error(error)
+    return []
   }
+}
 
-  setProfileList(profiles) {
-    this.profileList = profiles
-  }
+async function saveEngagement(engagement) {
+  try {
+    await Engagement.bulkCreate(engagement)
+  } catch (error) {}
+}
 
-  getProfileList() {
-    return this.profileList
-  }
-
-  async loadProfileList() {
-    try {
-      const response = await Profile.findAll({
-        attributes: ['id_str', 'screen_name'],
-      })
-      const profiles = response.map((profile) => profile.toJSON())
-      this.setProfileList(profiles)
-    } catch (error) {
-      this.setProfileList([])
-    }
-  }
-
-  async saveOne(row) {
-    try {
-      const response = await this.modelList[`${this.model}`].create(row)
-      return response
-    } catch (error) {
+async function getEngagement(id_str) {
+  try {
+    const querying = await Engagement.findAll({
+      attributes: [
+        'last_id_str',
+        'consulted_in',
+        'retweet_count',
+        'favorite_count',
+        'id',
+        'updated_at',
+      ],
+      where: {
+        id_str,
+      },
+      order: [['updated_at', 'DESC']],
+    })
+    const data = querying.map((data) => data.toJSON())
+    if (data.length) {
+      return data[0]
+    } else {
       return null
     }
-  }
-
-  async saveMany(dataset) {
-    try {
-      dataset.map(async (row) => {
-        try {
-          await this.modelList[`${this.model}`].create(row)
-        } catch(error){
-          console.error(row, error.message)
-        }
-      })
-    } catch (error) {
-      console.error(error)
-    }
+  } catch (error) {
+    console.error(error)
+    return null
   }
 }
 
-(async () => {
+async function run() {
   try {
-    const database = new DataBase('Engagement')
-    await database.loadProfileList()
-    database.getProfileList().map((profile, index) => {
+    const profiles = await getAllProfiles()
+    profiles.map(async ({ screen_name, id_str }, index) => {
+      if(index===profiles.length-1){
+        setTimeout(()=>run(),WAITING_TIME)
+      }
       setTimeout(async () => {
         try {
-          const last_id = await Engagement.findOne({
-            attributes:['id','last_id_str'],
-            where:{
-              id_str: profile.id_str
-            },
-            order: [['updated_at','DESC']]
-          })
-          const engage = new Engagements(profile.screen_name,3200, last_id.toJSON()?.last_id_str)
-          await engage.searchTweetsTimeline()
-          const profileEngagement = engage.getEngagement().map(engage=>({
-            retweet_count: engage.retweet_count,
-            favorite_count: engage.favorite_count,
-            createdAt: engage.consulted_in,
-            consulted_in: engage.consulted_in,
-            id_str: profile.id_str,
-            last_id_str: engage.id_str
-          }))
-          await database.saveMany(profileEngagement)
+          const querying = await getEngagement(id_str)
+          if (querying) {
+            // possui ultimo registro
+            // { last_id_str?, consulted_in }
+            const today = new Date(new Date().setHours(0)).getTime()
+            if (today <= new Date(querying.updated_at).getTime()) {
+              // update
+              let response = []
+              if (querying?.last_id_str) {
+                response = await searchTweetsTimeline({
+                  screen_name,
+                  since_id: querying.last_id_str,
+                  count: 3200,
+                })
+              } else {
+                response = await searchTweetsTimeline({
+                  screen_name,
+                  count: 1,
+                })
+              }
+              const totalLikes = response.reduce((acm, curr) => acm.favorite_count + curr.favorite_count,0)
+              const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count,0)
+              if(response.length){
+                await Engagement.update(
+                  {
+                    retweet_count: querying.retweet_count + totalRetweets,
+                    favorite_count: querying.favorite_count + totalLikes,
+                    consulted_in: new Date(),
+                    last_id_str: response[0].id_str,
+                  },
+                  {
+                    where: {
+                      id: querying.id,
+                    },
+                  },
+                )
+              } else {
+                await Engagement.update(
+                  {
+                    retweet_count: querying.retweet_count + totalRetweets,
+                    favorite_count: querying.favorite_count + totalLikes,
+                    consulted_in: new Date(),
+                  },
+                  {
+                    where: {
+                      id: querying.id,
+                    },
+                  },
+                )
+              }
+            } else {
+              // create
+              const response = await searchTweetsTimeline({
+                screen_name,
+                count: 1,
+              })
+              const totalLikes = response.reduce((acm, curr) => acm.favorite_count + curr.favorite_count)
+              const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count)
+              
+              if (response.length) {
+                await saveEngagement([{
+                  createdAt:response.createdAt,
+                  id_str,
+                  last_id_str: response[0].id_str,
+                  retweet_count: totalRetweets.retweet_count,
+                  favorite_count: totalLikes.favorite_count,
+                  consulted_in: response.consulted_in,
+                }])
+              }
+            }
+          } else {
+            // nao possui ultimo id
+            const response = await searchTweetsTimeline({
+              screen_name,
+              count: 1,
+            })
+            const totalLikes = response.reduce((acm, curr) => acm.favorite_count + curr.favorite_count)
+            const totalRetweets = response.reduce((acm, curr) => acm.retweet_count + curr.retweet_count)
+            if (response.length) {
+              await saveEngagement([{
+                createdAt,
+                id_str,
+                last_id_str: response.id_str,
+                retweet_count: totalRetweets,
+                favorite_count: totalLikes,
+                consulted_in: response.consulted_in,
+              }])
+            }
+          }
         } catch (error) {
-          console.error(profile.screen_name, error)
+          console.error(error)
         }
       }, SEARCH_TIME * index)
     })
   } catch (error) {
     console.error(error)
   }
-})()
+}
