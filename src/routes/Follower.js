@@ -24,9 +24,10 @@ Router.route('/:id_str')
 
       const followerList = quering.map(query=>{
         return { updated_at:new Date(query.toJSON().updated_at).toLocaleDateString(), followers_count:query.toJSON().followers_count }
-      }).filter((item,index)=>{
-        if(index<f.length-1){
-            if(item.updated_at===f[index+1].updated_at) return false
+      })
+      const followerListFiltered = followerList.filter((item,index)=>{
+        if(index<followerList.length-1){
+            if(item.updated_at===followerList[index+1].updated_at) return false
             else return true
         } else return true
     })
