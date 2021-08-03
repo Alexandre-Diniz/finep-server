@@ -26,8 +26,9 @@ Router.route('/:id_str')
             if(item.updated_at===engagement[index+1].updated_at) return false
             else return true
         } else return true
-    })
-      res.status(200).json({ engagement })
+    }).reverse()
+      res.status(200).json({ engagement:engagementFiltered
+       })
     } catch (error) {
       res.status(401).json({ message:error.message })
     }
