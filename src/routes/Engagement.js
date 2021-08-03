@@ -21,6 +21,12 @@ Router.route('/:id_str')
       const engagement = querying.map(engagement=>{
         return { consulted_in:new Date(engagement.toJSON().consulted_in).toLocaleDateString(), 'Retweets':engagement.toJSON().favorite_count, 'Likes':engagement.toJSON().favorite_count }
       })
+      engagementFiltered = engagement.filter((item,index)=>{
+        if(index<engagement.length-1){
+            if(item.updated_at===engagement[index+1].updated_at) return false
+            else return true
+        } else return true
+    })
       res.status(200).json({ engagement })
     } catch (error) {
       res.status(401).json({ message:error.message })
