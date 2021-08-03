@@ -32,7 +32,7 @@ Router.route('/:id_str')
         } else return true
     })
 
-      res.status(200).json({followerListFiltered})
+      res.status(200).json({followerList:followerListFiltered})
     } catch (error) {
       res.status(401).json({ message: error.message })
     }
